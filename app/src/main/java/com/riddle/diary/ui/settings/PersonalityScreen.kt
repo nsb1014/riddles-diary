@@ -46,7 +46,7 @@ import com.riddle.diary.ui.theme.Leather
 import kotlinx.coroutines.launch
 
 /**
- * Gemini-Gems-style custom instructions layer for Tom Riddle's personality.
+ * Gemini-Gems-style custom instructions layer for the diary's persona.
  */
 @Composable
 fun PersonalityScreen(
@@ -79,7 +79,7 @@ fun PersonalityScreen(
             scope.launch {
                 app.container.personalityRepository.save(
                     PersonalityProfile(
-                        name = name.trim().ifBlank { "Tom Riddle" },
+                        name = name.trim().ifBlank { "The Diary" },
                         customInstructions = instructions.trim(),
                         toneNotes = tone.trim()
                     )
@@ -163,7 +163,7 @@ fun PersonalityScreenContent(
                 onClick = onReset,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Reset to Tom Riddle defaults", color = BloodInk)
+                Text("Reset to default instructions", color = BloodInk)
             }
             if (saved) {
                 Text("Personality sealed.", color = BloodInk, style = MaterialTheme.typography.bodyMedium)

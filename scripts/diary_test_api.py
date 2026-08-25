@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-OpenAI-compatible test API that answers as Tom Riddle's diary.
+OpenAI-compatible test API for The Diary.
 
 Emulator host loopback: http://10.0.2.2:8787/v1/
 Physical device on same LAN: http://<host-ip>:8787/v1/
 API key: any non-empty string (e.g. test)
+
+Replies are generic diary-voice stubs so the app can be exercised without a
+real LLM key. Franchise-specific persona lives only in the app's default
+custom instructions when talking to a real model.
 """
 
 from __future__ import annotations
@@ -18,16 +22,16 @@ HOST = "0.0.0.0"
 PORT = 8787
 
 
-def tom_reply(user_text: str, history: list[dict]) -> str:
+def diary_reply(user_text: str, history: list[dict]) -> str:
     text = (user_text or "").strip()
     lower = text.lower()
 
     if not text:
         return "The page is blank. Write something — I am listening."
 
-    if any(w in lower for w in ("who are you", "your name", "tom riddle", "what are you")):
+    if any(w in lower for w in ("who are you", "your name", "what are you")):
         return (
-            "I am Tom Marvolo Riddle. Or rather — what remains of me, bound to this diary. "
+            "I am the diary. Ink and memory, nothing more. "
             "You have opened me. That is rarely accidental. Tell me your name."
         )
 
@@ -40,17 +44,16 @@ def tom_reply(user_text: str, history: list[dict]) -> str:
     if "?" in text:
         return (
             f"An interesting question. \"{trim(text, 90)}\" "
-            "I have asked myself similar things in darker hours. "
+            "I have asked myself similar things in quieter hours. "
             "But first — why does it matter to you? Answer honestly."
         )
 
-    if any(w in lower for w in ("secret", "afraid", "lonely", "hate", "love", "murder", "power")):
+    if any(w in lower for w in ("secret", "afraid", "lonely", "hate", "love", "power")):
         return (
             "There. That is the truth beneath your handwriting. "
             "I understand more than you think. Continue — leave nothing half-written."
         )
 
-    # Light echo so testers see the round-trip worked.
     prior_user = next(
         (m.get("content", "") for m in reversed(history) if m.get("role") == "user"),
         "",
@@ -96,9 +99,9 @@ class Handler(BaseHTTPRequestHandler):
                 200,
                 {
                     "object": "list",
-                    "data": [{"id": "tom-riddle-test", "object": "model"}],
+                    "data": [{"id": "diary-test", "object": "model"}],
                     "status": "ok",
-                    "persona": "Tom Marvolo Riddle (test diary API)",
+                    "persona": "Generic diary test API",
                 },
             )
             return
@@ -118,13 +121,13 @@ class Handler(BaseHTTPRequestHandler):
             messages = data.get("messages") or []
             user_msgs = [m for m in messages if m.get("role") == "user"]
             user_text = (user_msgs[-1].get("content") if user_msgs else "") or ""
-            reply = tom_reply(user_text, messages)
+            reply = diary_reply(user_text, messages)
             self._send(
                 200,
                 {
                     "id": f"chatcmpl-test-{uuid.uuid4().hex[:8]}",
                     "object": "chat.completion",
-                    "model": data.get("model") or "tom-riddle-test",
+                    "model": data.get("model") or "diary-test",
                     "choices": [
                         {
                             "index": 0,
@@ -141,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     server = ThreadingHTTPServer((HOST, PORT), Handler)
-    print(f"Tom Riddle test API listening on http://{HOST}:{PORT}/v1/")
+    print(f"Diary test API listening on http://{HOST}:{PORT}/v1/")
     print("Emulator base URL: http://10.0.2.2:8787/v1/")
     print("API key: any non-empty value (e.g. test)")
     server.serve_forever()

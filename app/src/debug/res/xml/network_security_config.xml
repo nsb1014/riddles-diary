@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Debug only: allow cleartext so the local Tom Riddle test API works over HTTP. -->
+<!-- Debug only: allow cleartext so the local diary test API works over HTTP. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

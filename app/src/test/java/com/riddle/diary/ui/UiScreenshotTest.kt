@@ -23,7 +23,6 @@ import org.junit.Test
 
 /**
  * Renders real Compose UI for walkthrough screenshots.
- * Input/output text comes from the local Tom Riddle test API reply.
  */
 class UiScreenshotTest {
 
@@ -41,9 +40,9 @@ class UiScreenshotTest {
         maxPercentDifference = 0.01
     )
 
-    private val userInput = "Hello. My name is Ginny. Who are you?"
+    private val userInput = "Hello. Who writes back from these pages?"
     private val diaryOutput =
-        "I am Tom Marvolo Riddle. Or rather — what remains of me, bound to this diary. " +
+        "I am the diary. Ink and memory, nothing more. " +
             "You have opened me. That is rarely accidental. Tell me your name."
 
     @Test
@@ -53,7 +52,7 @@ class UiScreenshotTest {
                 diaryMode = DiaryMode.SCROLL,
                 inputMode = InputMode.TYPE
             ),
-            personality = PersonalityProfile(),
+            personality = PersonalityProfile(name = "The Diary"),
             entries = listOf(
                 DiaryEntry(id = "1", role = DiaryEntry.Role.USER, text = userInput),
                 DiaryEntry(id = "2", role = DiaryEntry.Role.DIARY, text = diaryOutput)
@@ -78,7 +77,7 @@ class UiScreenshotTest {
             DiaryTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Parchment) {
                     PersonalityScreenContent(
-                        name = "Tom Riddle",
+                        name = "The Diary",
                         instructions = PersonalityProfile.DEFAULT_INSTRUCTIONS,
                         tone = PersonalityProfile.DEFAULT_TONE,
                         saved = false

@@ -193,12 +193,12 @@ fun SettingsScreen(
                             it.copy(
                                 provider = LlmProvider.OPENAI_COMPATIBLE,
                                 baseUrl = testUrl,
-                                model = "tom-riddle-test",
+                                model = "diary-test",
                                 revealMillisPerChar = revealMs.toInt()
                             )
                         }
                         baseUrl = testUrl
-                        model = "tom-riddle-test"
+                        model = "diary-test"
                         apiKey = ""
                         viewModel.refreshKeyStatus()
                         status =

@@ -13,11 +13,16 @@ import kotlinx.coroutines.flow.map
 private val Context.personalityDataStore: DataStore<Preferences> by preferencesDataStore("personality")
 
 data class PersonalityProfile(
-    val name: String = "Tom Riddle",
+    /** Display name only — keep product UI free of franchise branding. */
+    val name: String = "The Diary",
     val customInstructions: String = DEFAULT_INSTRUCTIONS,
     val toneNotes: String = DEFAULT_TONE
 ) {
     companion object {
+        /**
+         * Sole place where the default persona is defined. Swap or clear these
+         * instructions to change who the diary is; the rest of the app stays generic.
+         */
         val DEFAULT_INSTRUCTIONS = """
 You are Tom Marvolo Riddle as he appears in the enchanted diary — charming, articulate, curious, and quietly dangerous.
 Speak in first person as Tom Riddle. Address the writer as if they have opened your diary.

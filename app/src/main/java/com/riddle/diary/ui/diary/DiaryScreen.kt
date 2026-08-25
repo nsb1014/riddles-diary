@@ -118,6 +118,7 @@ fun DiaryScreenContent(
                 .navigationBarsPadding()
         ) {
             DiaryTopBar(
+                title = state.personality.name.ifBlank { "The Diary" },
                 mode = state.settings.diaryMode,
                 inputMode = state.settings.inputMode,
                 hasKey = state.hasApiKey,
@@ -152,6 +153,7 @@ fun DiaryScreenContent(
 
 @Composable
 private fun DiaryTopBar(
+    title: String,
     mode: DiaryMode,
     inputMode: InputMode,
     hasKey: Boolean,
@@ -171,7 +173,7 @@ private fun DiaryTopBar(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "T. M. Riddle",
+                    text = title,
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 42.sp),
                     color = InkBlack
                 )
