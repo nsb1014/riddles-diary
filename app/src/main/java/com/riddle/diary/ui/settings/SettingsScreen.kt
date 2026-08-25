@@ -107,7 +107,7 @@ fun SettingsScreen(
                         container.settingsRepository.update { it.copy(provider = LlmProvider.OPENAI_COMPATIBLE) }
                     }
                 }
-                ProviderChip("Gemini", state.settings.provider == LlmProvider.GEMINI) {
+                ProviderChip("Google Gemini", state.settings.provider == LlmProvider.GEMINI) {
                     scope.launch {
                         container.settingsRepository.update { it.copy(provider = LlmProvider.GEMINI) }
                     }
@@ -141,7 +141,7 @@ fun SettingsScreen(
                 DiaryField(baseUrl, { baseUrl = it }, "Base URL (OpenAI / compatible)")
                 DiaryField(model, { model = it }, "Model")
             } else {
-                DiaryField(geminiModel, { geminiModel = it }, "Gemini model")
+                DiaryField(geminiModel, { geminiModel = it }, "Google Gemini model")
             }
 
             Spacer(Modifier.height(8.dp))
@@ -193,12 +193,12 @@ fun SettingsScreen(
                             it.copy(
                                 provider = LlmProvider.OPENAI_COMPATIBLE,
                                 baseUrl = testUrl,
-                                model = "tom-riddle-test",
+                                model = "diary-test",
                                 revealMillisPerChar = revealMs.toInt()
                             )
                         }
                         baseUrl = testUrl
-                        model = "tom-riddle-test"
+                        model = "diary-test"
                         apiKey = ""
                         viewModel.refreshKeyStatus()
                         status =

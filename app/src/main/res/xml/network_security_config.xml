@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Debug/test: allow cleartext to the local mock Tom Riddle API (emulator + LAN). -->
+    <!-- Debug/test: allow cleartext to the local mock diary API (emulator + LAN). -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />

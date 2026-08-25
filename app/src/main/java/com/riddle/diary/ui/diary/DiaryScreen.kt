@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -52,12 +53,59 @@ import com.riddle.diary.ui.theme.InkBlack
 import com.riddle.diary.ui.theme.InkSepia
 import com.riddle.diary.ui.theme.Leather
 
+data class DiaryScreenActions(
+    val onMode: (DiaryMode) -> Unit = {},
+    val onInput: (InputMode) -> Unit = {},
+    val onSettings: () -> Unit = {},
+    val onClear: () -> Unit = {},
+    val onExportPdf: () -> Unit = {},
+    val onClearInk: () -> Unit = {},
+    val onSend: () -> Unit = {},
+    val onDismissError: () -> Unit = {},
+    val onTypedDraftChange: (String) -> Unit = {},
+    val onCanvasSize: (Float, Float) -> Unit = { _, _ -> },
+    val onStartStroke: (StrokePoint) -> Unit = {},
+    val onMoveStroke: (StrokePoint) -> Unit = {},
+    val onEndStroke: () -> Unit = {}
+)
+
 @Composable
 fun DiaryScreen(
     viewModel: DiaryViewModel,
     onOpenSettings: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    DiaryScreenContent(
+        state = state,
+        actions = DiaryScreenActions(
+            onMode = viewModel::setDiaryMode,
+            onInput = viewModel::setInputMode,
+            onSettings = {
+                viewModel.refreshKeyStatus()
+                onOpenSettings()
+            },
+            onClear = viewModel::clearConversation,
+            onExportPdf = {
+                viewModel.exportScrollConversationPdf(context)
+            },
+            onClearInk = viewModel::clearInk,
+            onSend = viewModel::send,
+            onDismissError = viewModel::dismissError,
+            onTypedDraftChange = viewModel::onTypedDraftChange,
+            onCanvasSize = viewModel::onCanvasSize,
+            onStartStroke = viewModel::startStroke,
+            onMoveStroke = viewModel::appendStroke,
+            onEndStroke = viewModel::endStroke
+        )
+    )
+}
+
+@Composable
+fun DiaryScreenContent(
+    state: DiaryUiState,
+    actions: DiaryScreenActions = DiaryScreenActions()
+) {
     val scroll = rememberScrollState()
 
     LaunchedEffect(state.entries.size, state.revealingText) {
@@ -76,37 +124,36 @@ fun DiaryScreen(
                 .navigationBarsPadding()
         ) {
             DiaryTopBar(
+                title = state.personality.name.ifBlank { "The Diary" },
                 mode = state.settings.diaryMode,
                 inputMode = state.settings.inputMode,
                 hasKey = state.hasApiKey,
-                onMode = viewModel::setDiaryMode,
-                onInput = viewModel::setInputMode,
-                onSettings = {
-                    viewModel.refreshKeyStatus()
-                    onOpenSettings()
-                },
-                onClear = viewModel::clearConversation
+                canExport = state.settings.diaryMode == DiaryMode.SCROLL && state.entries.isNotEmpty(),
+                onMode = actions.onMode,
+                onInput = actions.onInput,
+                onSettings = actions.onSettings,
+                onClear = actions.onClear,
+                onExportPdf = actions.onExportPdf
             )
 
             when (state.settings.diaryMode) {
                 DiaryMode.SCROLL -> ScrollCanvasMode(
                     state = state,
                     scrollState = scroll,
-                    viewModel = viewModel,
+                    actions = actions,
                     modifier = Modifier.weight(1f)
                 )
                 DiaryMode.VANISHING -> VanishingMode(
                     state = state,
-                    viewModel = viewModel,
+                    actions = actions,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             DiaryActionBar(
                 state = state,
-                onClearInk = viewModel::clearInk,
-                onSend = viewModel::send,
-                onDismissError = viewModel::dismissError
+                onClearInk = actions.onClearInk,
+                onSend = actions.onSend
             )
         }
     }
@@ -114,13 +161,16 @@ fun DiaryScreen(
 
 @Composable
 private fun DiaryTopBar(
+    title: String,
     mode: DiaryMode,
     inputMode: InputMode,
     hasKey: Boolean,
+    canExport: Boolean,
     onMode: (DiaryMode) -> Unit,
     onInput: (InputMode) -> Unit,
     onSettings: () -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onExportPdf: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -133,7 +183,7 @@ private fun DiaryTopBar(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "T. M. Riddle",
+                    text = title,
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 42.sp),
                     color = InkBlack
                 )
@@ -142,6 +192,15 @@ private fun DiaryTopBar(
                     style = MaterialTheme.typography.bodyMedium,
                     color = InkSepia.copy(alpha = 0.8f)
                 )
+            }
+            if (canExport) {
+                IconButton(onClick = onExportPdf) {
+                    Icon(
+                        Icons.Outlined.IosShare,
+                        contentDescription = "Export conversation as PDF",
+                        tint = GoldFiligree
+                    )
+                }
             }
             IconButton(onClick = onClear) {
                 Icon(Icons.Outlined.DeleteOutline, contentDescription = "Clear diary", tint = InkSepia)
@@ -176,7 +235,7 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
 private fun ScrollCanvasMode(
     state: DiaryUiState,
     scrollState: androidx.compose.foundation.ScrollState,
-    viewModel: DiaryViewModel,
+    actions: DiaryScreenActions,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -185,7 +244,6 @@ private fun ScrollCanvasMode(
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
     ) {
-        // Past conversation (scrollable back and forth)
         state.entries.forEach { entry ->
             val isLiveReveal =
                 entry.role == DiaryEntry.Role.DIARY &&
@@ -212,7 +270,7 @@ private fun ScrollCanvasMode(
 
         InputSurface(
             state = state,
-            viewModel = viewModel,
+            actions = actions,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
@@ -224,7 +282,7 @@ private fun ScrollCanvasMode(
 @Composable
 private fun VanishingMode(
     state: DiaryUiState,
-    viewModel: DiaryViewModel,
+    actions: DiaryScreenActions,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -273,7 +331,7 @@ private fun VanishingMode(
 
         InputSurface(
             state = state,
-            viewModel = viewModel,
+            actions = actions,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(260.dp)
@@ -286,7 +344,7 @@ private fun VanishingMode(
 @Composable
 private fun InputSurface(
     state: DiaryUiState,
-    viewModel: DiaryViewModel,
+    actions: DiaryScreenActions,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -301,10 +359,10 @@ private fun InputSurface(
                     activeStroke = state.activeStroke,
                     stylusPreferred = true,
                     enabled = state.revealComplete && !state.isThinking,
-                    onSize = viewModel::onCanvasSize,
-                    onStart = viewModel::startStroke,
-                    onMove = viewModel::appendStroke,
-                    onEnd = viewModel::endStroke
+                    onSize = actions.onCanvasSize,
+                    onStart = actions.onStartStroke,
+                    onMove = actions.onMoveStroke,
+                    onEnd = actions.onEndStroke
                 )
                 if (state.strokes.isEmpty() && state.activeStroke == null) {
                     Text(
@@ -329,7 +387,7 @@ private fun InputSurface(
             InputMode.TYPE -> {
                 BasicTextField(
                     value = state.typedDraft,
-                    onValueChange = viewModel::onTypedDraftChange,
+                    onValueChange = actions.onTypedDraftChange,
                     enabled = state.revealComplete && !state.isThinking,
                     textStyle = TextStyle(
                         fontFamily = HandFamily,
@@ -405,8 +463,7 @@ private fun ThinkingInk() {
 private fun DiaryActionBar(
     state: DiaryUiState,
     onClearInk: () -> Unit,
-    onSend: () -> Unit,
-    onDismissError: () -> Unit
+    onSend: () -> Unit
 ) {
     Column(
         modifier = Modifier

@@ -15,7 +15,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Converts S Pen / finger ink strokes into text via ML Kit Digital Ink.
+ * Converts S Pen / finger ink strokes into text via on-device digital ink recognition.
  */
 class InkRecognizer(@Suppress("UNUSED_PARAMETER") context: android.content.Context) {
     private val model: DigitalInkRecognitionModel

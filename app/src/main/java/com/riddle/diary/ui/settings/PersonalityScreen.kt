@@ -46,7 +46,7 @@ import com.riddle.diary.ui.theme.Leather
 import kotlinx.coroutines.launch
 
 /**
- * Gemini-Gems-style custom instructions layer for Tom Riddle's personality.
+ * Custom instructions layer for the diary's persona.
  */
 @Composable
 fun PersonalityScreen(
@@ -66,6 +66,52 @@ fun PersonalityScreen(
     }
     var saved by remember { mutableStateOf(false) }
 
+    PersonalityScreenContent(
+        name = name,
+        instructions = instructions,
+        tone = tone,
+        saved = saved,
+        onNameChange = { name = it },
+        onInstructionsChange = { instructions = it },
+        onToneChange = { tone = it },
+        onBack = onBack,
+        onSave = {
+            scope.launch {
+                app.container.personalityRepository.save(
+                    PersonalityProfile(
+                        name = name.trim().ifBlank { "The Diary" },
+                        customInstructions = instructions.trim(),
+                        toneNotes = tone.trim()
+                    )
+                )
+                saved = true
+            }
+        },
+        onReset = {
+            scope.launch {
+                app.container.personalityRepository.reset()
+                name = PersonalityProfile().name
+                instructions = PersonalityProfile.DEFAULT_INSTRUCTIONS
+                tone = PersonalityProfile.DEFAULT_TONE
+                saved = true
+            }
+        }
+    )
+}
+
+@Composable
+fun PersonalityScreenContent(
+    name: String,
+    instructions: String,
+    tone: String,
+    saved: Boolean = false,
+    onNameChange: (String) -> Unit = {},
+    onInstructionsChange: (String) -> Unit = {},
+    onToneChange: (String) -> Unit = {},
+    onBack: () -> Unit = {},
+    onSave: () -> Unit = {},
+    onReset: () -> Unit = {}
+) {
     Box(Modifier.fillMaxSize()) {
         ParchmentBackground()
         Column(
@@ -84,59 +130,40 @@ fun PersonalityScreen(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "Like Gemini custom Gems: these instructions shape how the diary speaks. " +
+                "These instructions shape how the diary speaks. " +
                     "They are prepended as the system personality for every reply.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = InkSepia
             )
             Spacer(Modifier.height(16.dp))
 
-            PersonalityField(name, { name = it }, "Identity name", singleLine = true)
+            PersonalityField(name, onNameChange, "Identity name", singleLine = true)
             PersonalityField(
                 instructions,
-                { instructions = it },
+                onInstructionsChange,
                 "Custom instructions",
                 minLines = 8
             )
             PersonalityField(
                 tone,
-                { tone = it },
+                onToneChange,
                 "Tone & style notes",
                 minLines = 4
             )
 
             Spacer(Modifier.height(12.dp))
             Button(
-                onClick = {
-                    scope.launch {
-                        app.container.personalityRepository.save(
-                            PersonalityProfile(
-                                name = name.trim().ifBlank { "Tom Riddle" },
-                                customInstructions = instructions.trim(),
-                                toneNotes = tone.trim()
-                            )
-                        )
-                        saved = true
-                    }
-                },
+                onClick = onSave,
                 colors = ButtonDefaults.buttonColors(containerColor = Leather, contentColor = GoldFiligree),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save personality")
             }
             TextButton(
-                onClick = {
-                    scope.launch {
-                        app.container.personalityRepository.reset()
-                        name = PersonalityProfile().name
-                        instructions = PersonalityProfile.DEFAULT_INSTRUCTIONS
-                        tone = PersonalityProfile.DEFAULT_TONE
-                        saved = true
-                    }
-                },
+                onClick = onReset,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Reset to Tom Riddle defaults", color = BloodInk)
+                Text("Reset to default instructions", color = BloodInk)
             }
             if (saved) {
                 Text("Personality sealed.", color = BloodInk, style = MaterialTheme.typography.bodyMedium)
