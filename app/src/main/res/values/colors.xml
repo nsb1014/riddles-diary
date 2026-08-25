@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="parchment">#F3E6C8</color>
+    <color name="parchment_dark">#E4D2A8</color>
+    <color name="ink_black">#1A120B</color>
+    <color name="ink_sepia">#3B2A1A</color>
+    <color name="leather">#2C1810</color>
+    <color name="gold_filigree">#B08D3A</color>
+    <color name="blood_ink">#4A1515</color>
+    <color name="shadow">#1A0F08</color>
+    <color name="ic_launcher_background">#2C1810</color>
+</resources>
