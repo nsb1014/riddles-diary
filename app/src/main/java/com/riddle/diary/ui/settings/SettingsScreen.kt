@@ -182,6 +182,36 @@ fun SettingsScreen(
                 Text("Save")
             }
 
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    scope.launch {
+                        // Prefer adb reverse / emulator loopback. Override in Base URL for LAN IP.
+                        val testUrl = "http://127.0.0.1:8787/v1/"
+                        container.secureKeyStore.saveApiKey("test")
+                        container.settingsRepository.update {
+                            it.copy(
+                                provider = LlmProvider.OPENAI_COMPATIBLE,
+                                baseUrl = testUrl,
+                                model = "tom-riddle-test",
+                                revealMillisPerChar = revealMs.toInt()
+                            )
+                        }
+                        baseUrl = testUrl
+                        model = "tom-riddle-test"
+                        apiKey = ""
+                        viewModel.refreshKeyStatus()
+                        status =
+                            "Test API ready. With USB: adb reverse tcp:8787 tcp:8787. " +
+                                "Emulator: use http://10.0.2.2:8787/v1/ as Base URL."
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = BloodInk, contentColor = GoldFiligree),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Connect local test API")
+            }
+
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = onOpenPersonality,
