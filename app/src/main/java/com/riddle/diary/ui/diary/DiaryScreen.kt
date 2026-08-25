@@ -64,9 +64,7 @@ data class DiaryScreenActions(
     val onDismissError: () -> Unit = {},
     val onTypedDraftChange: (String) -> Unit = {},
     val onCanvasSize: (Float, Float) -> Unit = { _, _ -> },
-    val onStartStroke: (StrokePoint) -> Unit = {},
-    val onMoveStroke: (StrokePoint) -> Unit = {},
-    val onEndStroke: () -> Unit = {}
+    val onStrokeCompleted: (InkStroke) -> Unit = {}
 )
 
 @Composable
@@ -94,9 +92,7 @@ fun DiaryScreen(
             onDismissError = viewModel::dismissError,
             onTypedDraftChange = viewModel::onTypedDraftChange,
             onCanvasSize = viewModel::onCanvasSize,
-            onStartStroke = viewModel::startStroke,
-            onMoveStroke = viewModel::appendStroke,
-            onEndStroke = viewModel::endStroke
+            onStrokeCompleted = viewModel::addCompletedStroke
         )
     )
 }
@@ -238,34 +234,43 @@ private fun ScrollCanvasMode(
     actions: DiaryScreenActions,
     modifier: Modifier = Modifier
 ) {
+    // Keep the writing surface OUTSIDE the scrollable history so S Pen
+    // gestures are not stolen by vertical scroll after a few pixels.
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
     ) {
-        state.entries.forEach { entry ->
-            val isLiveReveal =
-                entry.role == DiaryEntry.Role.DIARY &&
-                    entry == state.entries.lastOrNull() &&
-                    !state.revealComplete
-            val text = when {
-                isLiveReveal -> state.revealingText
-                entry.role == DiaryEntry.Role.DIARY &&
-                    entry == state.entries.lastOrNull() &&
-                    state.revealingText.isNotEmpty() -> state.revealingText
-                else -> entry.text
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            state.entries.forEach { entry ->
+                val isLiveReveal =
+                    entry.role == DiaryEntry.Role.DIARY &&
+                        entry == state.entries.lastOrNull() &&
+                        !state.revealComplete
+                val text = when {
+                    isLiveReveal -> state.revealingText
+                    entry.role == DiaryEntry.Role.DIARY &&
+                        entry == state.entries.lastOrNull() &&
+                        state.revealingText.isNotEmpty() -> state.revealingText
+                    else -> entry.text
+                }
+                DiaryMessage(
+                    entry = entry.copy(text = text),
+                    opacity = 1f
+                )
+                Spacer(Modifier.height(18.dp))
             }
-            DiaryMessage(
-                entry = entry.copy(text = text),
-                opacity = 1f
-            )
-            Spacer(Modifier.height(18.dp))
-        }
 
-        if (state.isThinking) {
-            ThinkingInk()
-            Spacer(Modifier.height(18.dp))
+            if (state.isThinking) {
+                ThinkingInk()
+                Spacer(Modifier.height(18.dp))
+            }
+            Spacer(Modifier.height(8.dp))
         }
 
         InputSurface(
@@ -275,7 +280,7 @@ private fun ScrollCanvasMode(
                 .fillMaxWidth()
                 .height(280.dp)
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -356,15 +361,11 @@ private fun InputSurface(
             InputMode.HANDWRITE -> {
                 HandwritingCanvas(
                     strokes = state.strokes,
-                    activeStroke = state.activeStroke,
-                    stylusPreferred = true,
                     enabled = state.revealComplete && !state.isThinking,
                     onSize = actions.onCanvasSize,
-                    onStart = actions.onStartStroke,
-                    onMove = actions.onMoveStroke,
-                    onEnd = actions.onEndStroke
+                    onStrokeCompleted = actions.onStrokeCompleted
                 )
-                if (state.strokes.isEmpty() && state.activeStroke == null) {
+                if (state.strokes.isEmpty()) {
                     Text(
                         text = "Write with S Pen…",
                         style = MaterialTheme.typography.bodyMedium,

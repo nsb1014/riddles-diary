@@ -40,7 +40,6 @@ data class DiaryUiState(
     val personality: PersonalityProfile = PersonalityProfile(),
     val entries: List<DiaryEntry> = emptyList(),
     val strokes: List<InkStroke> = emptyList(),
-    val activeStroke: InkStroke? = null,
     val typedDraft: String = "",
     val recognizedPreview: String = "",
     val isThinking: Boolean = false,
@@ -110,30 +109,16 @@ class DiaryViewModel(
         _ui.update { it.copy(canvasWidth = width, canvasHeight = height) }
     }
 
-    fun startStroke(point: StrokePoint) {
-        _ui.update { it.copy(activeStroke = InkStroke(listOf(point)), error = null) }
-    }
-
-    fun appendStroke(point: StrokePoint) {
-        _ui.update { state ->
-            val active = state.activeStroke ?: return@update state
-            state.copy(activeStroke = active.copy(points = active.points + point))
-        }
-    }
-
-    fun endStroke() {
-        _ui.update { state ->
-            val active = state.activeStroke ?: return@update state
-            state.copy(
-                strokes = state.strokes + active,
-                activeStroke = null
-            )
+    fun addCompletedStroke(stroke: InkStroke) {
+        if (stroke.points.isEmpty()) return
+        _ui.update {
+            it.copy(strokes = it.strokes + stroke, error = null)
         }
     }
 
     fun clearInk() {
         _ui.update {
-            it.copy(strokes = emptyList(), activeStroke = null, recognizedPreview = "")
+            it.copy(strokes = emptyList(), recognizedPreview = "")
         }
     }
 
@@ -189,7 +174,7 @@ class DiaryViewModel(
 
     private suspend fun recognizeCurrentInk(): String {
         val state = _ui.value
-        val allStrokes = state.strokes + listOfNotNull(state.activeStroke)
+        val allStrokes = state.strokes
         if (allStrokes.isEmpty()) return ""
         _ui.update { it.copy(isRecognizing = true, error = null) }
         return try {
@@ -221,7 +206,6 @@ class DiaryViewModel(
             it.copy(
                 typedDraft = "",
                 strokes = emptyList(),
-                activeStroke = null,
                 recognizedPreview = "",
                 isThinking = true,
                 error = null,
