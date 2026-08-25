@@ -22,10 +22,51 @@ data class AppSettings(
     val inputMode: InputMode = InputMode.HANDWRITE,
     val provider: LlmProvider = LlmProvider.OPENAI_COMPATIBLE,
     val baseUrl: String = "https://api.openai.com/v1/",
-    val model: String = "gpt-4o-mini",
-    val geminiModel: String = "gemini-2.0-flash",
+    val model: String = DEFAULT_OPENAI_MODEL,
+    val geminiModel: String = DEFAULT_GEMINI_MODEL,
     val revealMillisPerChar: Int = 45
-)
+) {
+    companion object {
+        /** Balanced GPT-5.6 tier — good default for chat volume. */
+        const val DEFAULT_OPENAI_MODEL = "gpt-5.6-terra"
+
+        /** Current Google Gemini Flash workhorse. */
+        const val DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+
+        private val RETIRED_OPENAI_MODELS = setOf(
+            "gpt-4o-mini",
+            "gpt-4o",
+            "gpt-4.1-mini",
+            "gpt-4.1",
+            "gpt-5-mini",
+            "gpt-5-nano"
+        )
+
+        private val RETIRED_GEMINI_MODELS = setOf(
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-3.5-flash"
+        )
+
+        fun normalizeOpenAiModel(model: String?): String {
+            val value = model?.trim().orEmpty()
+            if (value.isEmpty() || value in RETIRED_OPENAI_MODELS) {
+                return DEFAULT_OPENAI_MODEL
+            }
+            return value
+        }
+
+        fun normalizeGeminiModel(model: String?): String {
+            val value = model?.trim().orEmpty()
+            if (value.isEmpty() || value in RETIRED_GEMINI_MODELS) {
+                return DEFAULT_GEMINI_MODEL
+            }
+            return value
+        }
+    }
+}
 
 class SettingsRepository(private val context: Context) {
     private val diaryModeKey = stringPreferencesKey("diary_mode")
@@ -46,8 +87,8 @@ class SettingsRepository(private val context: Context) {
             provider = prefs[providerKey]?.let { runCatching { LlmProvider.valueOf(it) }.getOrNull() }
                 ?: LlmProvider.OPENAI_COMPATIBLE,
             baseUrl = prefs[baseUrlKey] ?: "https://api.openai.com/v1/",
-            model = prefs[modelKey] ?: "gpt-4o-mini",
-            geminiModel = prefs[geminiModelKey] ?: "gemini-2.0-flash",
+            model = AppSettings.normalizeOpenAiModel(prefs[modelKey]),
+            geminiModel = AppSettings.normalizeGeminiModel(prefs[geminiModelKey]),
             revealMillisPerChar = prefs[revealKey]?.toIntOrNull() ?: 45
         )
     }
@@ -61,8 +102,8 @@ class SettingsRepository(private val context: Context) {
             prefs[inputModeKey] = next.inputMode.name
             prefs[providerKey] = next.provider.name
             prefs[baseUrlKey] = next.baseUrl
-            prefs[modelKey] = next.model
-            prefs[geminiModelKey] = next.geminiModel
+            prefs[modelKey] = AppSettings.normalizeOpenAiModel(next.model)
+            prefs[geminiModelKey] = AppSettings.normalizeGeminiModel(next.geminiModel)
             prefs[revealKey] = next.revealMillisPerChar.toString()
         }
     }

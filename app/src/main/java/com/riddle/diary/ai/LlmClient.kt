@@ -100,7 +100,7 @@ $tone
         client.newCall(request).execute().use { response ->
             val raw = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                error("Diary connection failed (${response.code}): ${raw.take(280)}")
+                error(friendlyHttpError(response.code, raw))
             }
             val parsed = json.decodeFromString<OpenAiResponse>(raw)
             return parsed.choices.firstOrNull()?.message?.content?.trim().orEmpty()
@@ -141,7 +141,7 @@ $tone
         client.newCall(request).execute().use { response ->
             val raw = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                error("Diary connection failed (${response.code}): ${raw.take(280)}")
+                error(friendlyHttpError(response.code, raw))
             }
             val parsed = json.decodeFromString<GeminiResponse>(raw)
             return parsed.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text?.trim().orEmpty()
@@ -151,6 +151,20 @@ $tone
 
     companion object {
         private val JSON = "application/json; charset=utf-8".toMediaType()
+
+        internal fun friendlyHttpError(code: Int, raw: String): String {
+            val message = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"")
+                .find(raw)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.replace("\\n", " ")
+                ?.trim()
+            return if (!message.isNullOrBlank()) {
+                "Diary connection failed ($code): $message"
+            } else {
+                "Diary connection failed ($code): ${raw.take(180)}"
+            }
+        }
     }
 }
 
