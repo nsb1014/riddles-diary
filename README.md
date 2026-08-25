@@ -1,5 +1,12 @@
 # The Diary
 
+**Download the installable APK (phone-friendly):**  
+https://github.com/nsb1014/riddles-diary/releases/download/v1.0.0/TheDiary-release.apk  
+
+Release page: https://github.com/nsb1014/riddles-diary/releases/tag/v1.0.0
+
+---
+
 An Android diary app with parchment pages, cursive ink that writes itself, S Pen handwriting, and an LLM behind a customizable personality layer.
 
 ## Features
