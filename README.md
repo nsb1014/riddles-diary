@@ -11,6 +11,7 @@ An Android diary app with parchment pages, cursive ink that writes itself, S Pen
 - **Slow ink reveal** for AI replies (configurable ms/character)
 - **S Pen handwriting** with pressure-aware strokes + on-device ink recognition, plus **typing**
 - **Scroll canvas** and **vanishing** conversation modes
+- **Export scroll conversations** as PDF via the system share sheet (e.g. Samsung Notes)
 
 ## Build the APK
 

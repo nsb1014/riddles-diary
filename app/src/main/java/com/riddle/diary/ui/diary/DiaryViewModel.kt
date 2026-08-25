@@ -10,8 +10,11 @@ import com.riddle.diary.data.DiaryEntry
 import com.riddle.diary.data.DiaryMode
 import com.riddle.diary.data.InputMode
 import com.riddle.diary.data.PersonalityProfile
+import com.riddle.diary.util.ConversationPdfExporter
 import com.riddle.diary.util.InkRecognizer
+import android.content.Context
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 data class StrokePoint(
@@ -135,6 +139,36 @@ class DiaryViewModel(
 
     fun dismissError() {
         _ui.update { it.copy(error = null) }
+    }
+
+    fun exportScrollConversationPdf(context: Context) {
+        val state = _ui.value
+        if (state.settings.diaryMode != DiaryMode.SCROLL) {
+            _ui.update { it.copy(error = "Switch to Scroll mode to export the conversation.") }
+            return
+        }
+        if (state.entries.isEmpty()) {
+            _ui.update { it.copy(error = "Nothing to export yet — write a little first.") }
+            return
+        }
+        val title = state.personality.name.ifBlank { "The Diary" }
+        val entries = state.entries
+        viewModelScope.launch {
+            runCatching {
+                val pdf = withContext(Dispatchers.IO) {
+                    ConversationPdfExporter.writePdf(
+                        context = context.applicationContext,
+                        title = title,
+                        entries = entries
+                    )
+                }
+                ConversationPdfExporter.sharePdf(context, pdf, title)
+            }.onFailure { e ->
+                _ui.update {
+                    it.copy(error = e.message ?: "Could not export the conversation.")
+                }
+            }
+        }
     }
 
     fun send() {

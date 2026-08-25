@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -57,6 +58,7 @@ data class DiaryScreenActions(
     val onInput: (InputMode) -> Unit = {},
     val onSettings: () -> Unit = {},
     val onClear: () -> Unit = {},
+    val onExportPdf: () -> Unit = {},
     val onClearInk: () -> Unit = {},
     val onSend: () -> Unit = {},
     val onDismissError: () -> Unit = {},
@@ -73,6 +75,7 @@ fun DiaryScreen(
     onOpenSettings: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
     DiaryScreenContent(
         state = state,
         actions = DiaryScreenActions(
@@ -83,6 +86,9 @@ fun DiaryScreen(
                 onOpenSettings()
             },
             onClear = viewModel::clearConversation,
+            onExportPdf = {
+                viewModel.exportScrollConversationPdf(context)
+            },
             onClearInk = viewModel::clearInk,
             onSend = viewModel::send,
             onDismissError = viewModel::dismissError,
@@ -122,10 +128,12 @@ fun DiaryScreenContent(
                 mode = state.settings.diaryMode,
                 inputMode = state.settings.inputMode,
                 hasKey = state.hasApiKey,
+                canExport = state.settings.diaryMode == DiaryMode.SCROLL && state.entries.isNotEmpty(),
                 onMode = actions.onMode,
                 onInput = actions.onInput,
                 onSettings = actions.onSettings,
-                onClear = actions.onClear
+                onClear = actions.onClear,
+                onExportPdf = actions.onExportPdf
             )
 
             when (state.settings.diaryMode) {
@@ -157,10 +165,12 @@ private fun DiaryTopBar(
     mode: DiaryMode,
     inputMode: InputMode,
     hasKey: Boolean,
+    canExport: Boolean,
     onMode: (DiaryMode) -> Unit,
     onInput: (InputMode) -> Unit,
     onSettings: () -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onExportPdf: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -182,6 +192,15 @@ private fun DiaryTopBar(
                     style = MaterialTheme.typography.bodyMedium,
                     color = InkSepia.copy(alpha = 0.8f)
                 )
+            }
+            if (canExport) {
+                IconButton(onClick = onExportPdf) {
+                    Icon(
+                        Icons.Outlined.IosShare,
+                        contentDescription = "Export conversation as PDF",
+                        tint = GoldFiligree
+                    )
+                }
             }
             IconButton(onClick = onClear) {
                 Icon(Icons.Outlined.DeleteOutline, contentDescription = "Clear diary", tint = InkSepia)
