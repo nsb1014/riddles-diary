@@ -234,13 +234,22 @@ private fun ScrollCanvasMode(
     actions: DiaryScreenActions,
     modifier: Modifier = Modifier
 ) {
-    // Keep the writing surface OUTSIDE the scrollable history so S Pen
-    // gestures are not stolen by vertical scroll after a few pixels.
+    // Writing pad stays fixed (not inside the scroll) so S Pen isn't stolen.
+    // Pad is pinned near the top so Scroll and Vanish share the same input position.
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
     ) {
+        InputSurface(
+            state = state,
+            actions = actions,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        )
+        Spacer(Modifier.height(12.dp))
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -272,15 +281,6 @@ private fun ScrollCanvasMode(
             }
             Spacer(Modifier.height(8.dp))
         }
-
-        InputSurface(
-            state = state,
-            actions = actions,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp)
-        )
-        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -295,6 +295,16 @@ private fun VanishingMode(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
     ) {
+        InputSurface(
+            state = state,
+            actions = actions,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .alpha(if (state.revealComplete && !state.isThinking) 1f else 0.35f)
+        )
+        Spacer(Modifier.height(12.dp))
+
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -303,7 +313,7 @@ private fun VanishingMode(
         ) {
             when {
                 state.isThinking -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                         ThinkingInk()
                     }
                 }
@@ -318,7 +328,7 @@ private fun VanishingMode(
                         ),
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(top = 24.dp, start = 12.dp, end = 12.dp)
+                            .padding(start = 12.dp, end = 12.dp)
                     )
                 }
                 else -> {
@@ -328,21 +338,11 @@ private fun VanishingMode(
                         color = InkSepia.copy(alpha = 0.45f),
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(top = 32.dp)
+                            .padding(top = 8.dp)
                     )
                 }
             }
         }
-
-        InputSurface(
-            state = state,
-            actions = actions,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(260.dp)
-                .alpha(if (state.revealComplete && !state.isThinking) 1f else 0.35f)
-        )
-        Spacer(Modifier.height(8.dp))
     }
 }
 

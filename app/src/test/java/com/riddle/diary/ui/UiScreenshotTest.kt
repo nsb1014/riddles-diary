@@ -86,4 +86,46 @@ class UiScreenshotTest {
             }
         }
     }
+
+    @Test
+    fun diary_scroll_input_position() {
+        paparazzi.snapshot(name = "diary_scroll_input_position") {
+            DiaryTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = Parchment) {
+                    DiaryScreenContent(
+                        state = DiaryUiState(
+                            settings = AppSettings(
+                                diaryMode = DiaryMode.SCROLL,
+                                inputMode = InputMode.TYPE
+                            ),
+                            personality = PersonalityProfile(name = "The Diary"),
+                            hasApiKey = true,
+                            revealComplete = true
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun diary_vanish_input_position() {
+        paparazzi.snapshot(name = "diary_vanish_input_position") {
+            DiaryTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = Parchment) {
+                    DiaryScreenContent(
+                        state = DiaryUiState(
+                            settings = AppSettings(
+                                diaryMode = DiaryMode.VANISHING,
+                                inputMode = InputMode.TYPE
+                            ),
+                            personality = PersonalityProfile(name = "The Diary"),
+                            hasApiKey = true,
+                            revealComplete = true
+                        )
+                    )
+                }
+            }
+        }
+    }
 }
