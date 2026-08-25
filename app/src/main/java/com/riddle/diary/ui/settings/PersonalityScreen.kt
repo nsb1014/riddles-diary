@@ -46,7 +46,7 @@ import com.riddle.diary.ui.theme.Leather
 import kotlinx.coroutines.launch
 
 /**
- * Gemini-Gems-style custom instructions layer for the diary's persona.
+ * Custom instructions layer for the diary's persona.
  */
 @Composable
 fun PersonalityScreen(
@@ -130,7 +130,7 @@ fun PersonalityScreenContent(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "Like Gemini custom Gems: these instructions shape how the diary speaks. " +
+                "These instructions shape how the diary speaks. " +
                     "They are prepended as the system personality for every reply.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = InkSepia

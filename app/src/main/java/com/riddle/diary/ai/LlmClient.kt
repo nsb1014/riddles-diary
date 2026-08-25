@@ -61,7 +61,7 @@ class LlmClient(
     private fun buildSystemPrompt(name: String, instructions: String, tone: String): String = """
 Name / identity: $name
 
-Custom instructions (like a Gem personality layer — follow these closely):
+Custom instructions (follow these closely):
 $instructions
 
 Tone & style notes:
