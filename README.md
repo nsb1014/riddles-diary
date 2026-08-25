@@ -30,13 +30,35 @@ Release (unsigned/minify):
 ./gradlew :app:assembleRelease
 ```
 
-## First-run setup on device
+## Test without a real LLM key
 
-1. Install the APK on a Galaxy S25 Ultra (or any Android 9+ device)
-2. Open **Settings** (gear) → paste your OpenAI-compatible or Gemini API key
-3. Optionally open **Personality layer** to customize instructions
-4. Choose **Scroll** or **Vanish**, then **S Pen** or **Type**
-5. Write or type, tap **Seal & Send**
+A local OpenAI-compatible mock answers as Tom Riddle:
+
+```bash
+python3 scripts/tom_riddle_test_api.py
+```
+
+Then on your phone (USB debugging):
+
+```bash
+adb reverse tcp:8787 tcp:8787
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+In the app: **Settings → Connect local test API →** write something → **Seal & Send**.
+
+- USB + `adb reverse`: base URL `http://127.0.0.1:8787/v1/` (what the button sets)
+- Emulator: set Base URL to `http://10.0.2.2:8787/v1/`
+- API key can be any non-empty string (button uses `test`)
+
+Smoke-check the mock:
+
+```bash
+curl -s http://127.0.0.1:8787/v1/chat/completions \
+  -H 'Authorization: Bearer test' \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"tom-riddle-test","messages":[{"role":"user","content":"Who are you?"}]}'
+```
 
 ## Notes
 
